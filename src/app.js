@@ -51,16 +51,24 @@ app.use(compression());
 
 // Add this before your routes
 // Update CORS configuration
-app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'https://frontend-dreambook-vercel.vercel.app'  // Removed trailing slash
-    ],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+// app.use(cors({
+//     origin: [
+//         'http://localhost:3000',
+//         'https://frontend-dreambook-vercel.vercel.app'
+//     ],
+//     credentials: true,
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//     allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'Accept'],
+//     exposedHeaders: ['Content-Range', 'X-Content-Range'],
+//     maxAge: 86400 // 24 hours
+// }));
+
+// enable cors
+app.use(cors());
 app.options('*', cors());
+
+// Remove this line as we already have CORS configured above
+// app.options('*', cors());
 
 // Reroute all API request starting with "/v1" route
 app.use('/v1', routes);
