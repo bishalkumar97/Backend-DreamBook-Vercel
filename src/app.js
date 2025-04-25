@@ -46,7 +46,20 @@ app.use(express.urlencoded({ extended: true }));
 app.use(compression());
 
 // enable cors
-app.use(cors());
+// Remove this duplicate import
+// const cors = require('cors');
+
+// Add this before your routes
+// Update CORS configuration
+app.use(cors({
+    origin: [
+        'http://localhost:3000',
+        'https://frontend-dreambook-vercel.vercel.app'  // Removed trailing slash
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.options('*', cors());
 
 // Reroute all API request starting with "/v1" route
