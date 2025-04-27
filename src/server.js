@@ -361,7 +361,8 @@ app.use(cors({
   origin: [
     'http://localhost:3001',
     'https://dreambookpublishing.com',
-    'https://frontend-dreambook-vercel.vercel.app'
+    'https://frontend-dreambook-vercel.vercel.app',
+    'https://backend-dream-book-vercel.vercel.app'
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
