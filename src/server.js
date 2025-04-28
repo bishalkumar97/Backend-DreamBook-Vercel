@@ -8,7 +8,9 @@ const wooCommerceService = require("./services/woocommerce");
 const app = require("./app");
 const admin = require('./config/firebase');
 const Order = require("./models/Order");
-const routes = require("./routes/v1");
+const express = require('express');
+const cors = require('cors');
+const routes = require("./routes/v1"); // Assuming your v1 routes are here
 const { computeTopRatedAuthors } = require("./helpers/computeAuthors");
 const { syncAllBookImages } = require("./services/imageSync.service");
 const { Book } = require("./models"); // Update this line
@@ -238,3 +240,39 @@ cron.schedule("0 */6 * * *", async () => {
   logger.info("🔄 Starting scheduled image sync...");
   await syncAllBookImages();
 });
+
+// --- CORS Configuration ---
+// Define allowed origins - Modified to allow all origins
+// const allowedOrigins = [
+//     'http://localhost:3000', // Your local dev environment
+//     'https://frontend-dreambook-vercel.vercel.app' // Your production frontend (adjust if different)
+//     // Add any other origins you need to allow
+// ];
+
+const corsOptions = {
+    origin: '*',
+    credentials: true, 
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: ['Content-Type', 'Authorization', 'Origin', 'X-Requested-With', 'Accept'],
+};
+
+app.use(cors(corsOptions));
+// Enable pre-flight requests for all routes
+app.options('*', cors(corsOptions)); // Ensure pre-flight requests also use the open policy
+// --- End CORS Configuration ---
+
+
+app.use(express.json());
+// ...
+
+// Mount API routes
+app.use('/v1', routes); // Make sure your routes are mounted under /v1
+
+// ... error handling and server start logic ...
+
+const PORT = process.env.PORT || 3001; // Or your configured port
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
+
+module.exports = app; // If needed for Vercel
