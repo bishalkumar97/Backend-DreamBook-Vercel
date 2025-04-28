@@ -532,6 +532,216 @@
 // });
 
 
+// require("dotenv").config({ path: "../.env" });
+
+// const mongoose = require("mongoose");
+// const cron = require("node-cron");
+// const cors = require('cors');
+// const app = require("./app");
+// const logger = require("./config/logger");
+// const config = require("./config/config");
+// const admin = require('./config/firebase');
+
+// const amazonService = require("./services/amazon");
+// const wooCommerceService = require("./services/woocommerce");
+// const { syncAllBookImages } = require("./services/imageSync.service");
+// const { computeTopRatedAuthors } = require("./helpers/computeAuthors");
+
+// const Order = require("./models/Order");
+// const { Book } = require("./models");
+// const Author = require("./models/author.model");
+// const User = require("./models/user.model");
+// const { sendWelcomeEmail } = require("./sendWelcomeEmails");
+
+// let server;
+
+// // ===== Setup CORS Middleware (Updated) =====
+// const allowedOrigins = [
+//   'http://localhost:3001',
+//   'https://dreambookpublishing.com',
+//   'https://frontend-dreambook-vercel.vercel.app',
+//   'https://backend-dream-book-vercel.vercel.app'
+// ];
+
+// const corsOptions = {
+//   origin: function (origin, callback) {
+//     if (!origin) return callback(null, true); // Allow Postman or server-to-server
+//     if (allowedOrigins.indexOf(origin) !== -1) {
+//       callback(null, true);
+//     } else {
+//       callback(new Error('Not allowed by CORS'));
+//     }
+//   },
+//   credentials: true,
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+//   allowedHeaders: ['Content-Type', 'Authorization'],
+// };
+
+// app.use(cors(corsOptions));
+// app.options('*', cors(corsOptions)); // Handle preflight OPTIONS requests
+
+// // ===== Helper Functions =====
+// async function syncOrders() {
+//   try {
+//     logger.info("🔄 Syncing Orders...");
+//     const amazonOrders = await amazonService.fetchAmazonOrders();
+//     if (amazonOrders?.length) {
+//       await amazonService.saveAmazonOrders(amazonOrders);
+//     }
+//     await wooCommerceService.fetchOrders();
+//     logger.info("✅ Order sync completed.");
+//   } catch (error) {
+//     logger.error("❌ Error during order sync:", error);
+//   }
+// }
+
+// async function syncImages() {
+//   try {
+//     logger.info("🔄 Syncing Book Images...");
+//     await syncAllBookImages();
+//     logger.info("✅ Book images sync completed.");
+//   } catch (error) {
+//     logger.error("❌ Error syncing images:", error);
+//   }
+// }
+
+// async function processNewUsers() {
+//   try {
+//     const users = await User.find({ welcomeEmailSent: false });
+//     for (const user of users) {
+//       await sendWelcomeEmail(user);
+//       user.welcomeEmailSent = true;
+//       await user.save();
+//       logger.info(`✅ Welcome email sent to ${user.email}`);
+//     }
+//   } catch (error) {
+//     logger.error("❌ Error sending welcome emails:", error);
+//   }
+// }
+
+// // ===== Routes =====
+// app.get("/api/dashboard", async (req, res) => {
+//   try {
+//     const orders = await Order.find().sort({ createdAt: -1 });
+
+//     const platformEarnings = orders.reduce((sum, o) => sum + parseFloat(o.total || 0), 0);
+//     const totalRoyalty = platformEarnings * 0.1;
+//     const totalBooks = await Book.countDocuments();
+//     const totalAuthors = await Author.countDocuments();
+//     const totalSale = orders.reduce((sum, o) => sum + (o.line_items?.reduce((acc, item) => acc + (item.quantity || 0), 0) || 0), 0);
+
+//     const bookSales = {};
+//     orders.forEach(order => {
+//       const date = new Date(order.date_created);
+//       const monthYear = date.toLocaleString('default', { month: 'long', year: 'numeric' });
+//       order.line_items?.forEach(item => {
+//         if (!bookSales[monthYear]) bookSales[monthYear] = {};
+//         if (!bookSales[monthYear][item.bookId]) {
+//           bookSales[monthYear][item.bookId] = { name: item.name, quantity: 0, total: 0 };
+//         }
+//         bookSales[monthYear][item.bookId].quantity += item.quantity;
+//         bookSales[monthYear][item.bookId].total += parseFloat(item.total);
+//       });
+//     });
+
+//     const salesReport = orders.map(o => ({
+//       platformName: o.source === "amazon" ? "Amazon" : "WooCommerce",
+//       quantity: (o.line_items || []).reduce((acc, item) => acc + (item.quantity || 0), 0),
+//       profitsEarned: `₹${o.total}`,
+//       date: new Date(o.date_created).toLocaleDateString("en-GB", {
+//         day: "2-digit",
+//         month: "short",
+//         year: "numeric"
+//       }),
+//     }));
+
+//     const topRatedAuthors = await computeTopRatedAuthors();
+
+//     res.json({
+//       status: true,
+//       data: {
+//         platformEarnings: `₹${platformEarnings.toFixed(2)}`,
+//         totalRoyalty: `₹${totalRoyalty.toFixed(2)}`,
+//         totalBooks,
+//         totalSale,
+//         totalAuthors,
+//         salesReport,
+//         bookSales,
+//         topRatedAuthors,
+//       }
+//     });
+//   } catch (error) {
+//     logger.error("❌ Error building dashboard data:", error);
+//     res.status(500).json({ status: false, message: "Error building dashboard data" });
+//   }
+// });
+
+// app.get("/api/orders", async (req, res) => {
+//   try {
+//     const { source } = req.query;
+//     const filter = source ? { source } : {};
+//     const orders = await Order.find(filter).sort({ date_created: -1 });
+
+//     if (!orders.length) {
+//       return res.status(404).json({ status: false, message: "No orders found" });
+//     }
+
+//     res.json({ status: true, data: orders });
+//   } catch (error) {
+//     logger.error("❌ Error fetching orders:", error);
+//     res.status(500).json({ status: false, message: "Error fetching orders" });
+//   }
+// });
+
+// // ===== Start Application =====
+// mongoose.connect(config.mongoose.url, config.mongoose.options)
+//   .then(() => {
+//     logger.info("✅ Connected to MongoDB");
+
+//     server = app.listen(config.port, async () => {
+//       logger.info(`🚀 Server running on port ${config.port}`);
+      
+//       // Start services once the server is ready
+//       await syncOrders();
+//       await syncImages();
+//       setInterval(processNewUsers, 30000); // Process new users every 30 seconds
+//     });
+
+//     // Setup CRON jobs
+//     cron.schedule("0 * * * *", syncOrders);          // every hour
+//     cron.schedule("*/30 * * * *", syncOrders);        // every 30 min
+//     cron.schedule("0 */6 * * *", syncImages);         // every 6 hours
+//   })
+//   .catch((err) => {
+//     logger.error("❌ MongoDB Connection Error:", err);
+//   });
+
+// // ===== Error Handling =====
+// const exitHandler = () => {
+//   if (server) {
+//     server.close(() => {
+//       logger.info("Server closed");
+//       process.exit(1);
+//     });
+//   } else {
+//     process.exit(1);
+//   }
+// };
+
+// const unexpectedErrorHandler = (error) => {
+//   logger.error(error);
+//   exitHandler();
+// };
+
+// process.on('uncaughtException', unexpectedErrorHandler);
+// process.on('unhandledRejection', unexpectedErrorHandler);
+// process.on('SIGTERM', () => {
+//   logger.info("SIGTERM received");
+//   if (server) {
+//     server.close();
+//   }
+// });
+
 require("dotenv").config({ path: "../.env" });
 
 const mongoose = require("mongoose");
@@ -556,23 +766,9 @@ const { sendWelcomeEmail } = require("./sendWelcomeEmails");
 let server;
 
 // ===== Setup CORS Middleware (Updated) =====
-const allowedOrigins = [
-  'http://localhost:3001',
-  'https://dreambookpublishing.com',
-  'https://frontend-dreambook-vercel.vercel.app',
-  'https://backend-dream-book-vercel.vercel.app'
-];
-
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true); // Allow Postman or server-to-server
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
+  origin: '*', // Allow all origins
+  credentials: false, // No credentials when using '*'
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 };
@@ -741,4 +937,3 @@ process.on('SIGTERM', () => {
     server.close();
   }
 });
-
